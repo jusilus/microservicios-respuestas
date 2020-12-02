@@ -1,5 +1,8 @@
 package com.formacionbdi.microservicios.app.respuestas.controller;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,23 +20,31 @@ public class RespuestaController {
 
 	@Autowired
 	private RespuestaService respuestaService;
-
-	@PostMapping
-	public ResponseEntity<?> agregar(@RequestBody Iterable<Respuesta> respuestas) {
-		Iterable<Respuesta> respuestasDb = respuestaService.saveAll(respuestas);
-		return ResponseEntity.status(HttpStatus.CREATED).body(respuestasDb);
-	}
-
+	
+	/* METODOS GET */
+	
 	@GetMapping("/alumno/{alumnoId}/examen/{examenId}")
 	public ResponseEntity<?> obtenerRespuestasPorAlumnoPorExamen(@PathVariable Long alumnoId,
 			@PathVariable Long examenId) {
 		Iterable<?> respuestas = respuestaService.findRespuestaByAlumnoByExamen(alumnoId, examenId);
 		return ResponseEntity.ok(respuestas);
 	}
-	
-	@GetMapping("/alumno/{alumnoId}/examenes-respondido")
-	public ResponseEntity<?> obtenerExamenesIdsConRespuestasAlumno(@PathVariable Long alumnoId){
+
+	@GetMapping("/alumno/{alumnoId}/examenes-respondidos")
+	public ResponseEntity<?> obtenerExamenesIdsConRespuestasAlumno(@PathVariable Long alumnoId) {
 		Iterable<Long> examenesId = respuestaService.findExamenesIdsConRespuestasByAlumno(alumnoId);
 		return ResponseEntity.ok(examenesId);
 	}	
+
+	/* METODOS POST */
+	
+	@PostMapping
+	public ResponseEntity<?> agregar(@RequestBody Iterable<Respuesta> respuestas) {
+		respuestas = ((List<Respuesta>) respuestas).stream().map(r -> {
+			r.setAlumnoId(r.getAlumno().getId());
+			return r;
+		}).collect(Collectors.toList());
+		Iterable<Respuesta> respuestasDb = respuestaService.saveAll(respuestas);
+		return ResponseEntity.status(HttpStatus.CREATED).body(respuestasDb);
+	}
 }
