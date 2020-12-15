@@ -1,17 +1,17 @@
 package com.formacionbdi.microservicios.app.respuestas.service;
 
+//import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.formacionbdi.microservicios.app.respuestas.clients.ExamenFeignClient;
+//import com.formacionbdi.microservicios.app.respuestas.clients.ExamenFeignClient;
 import com.formacionbdi.microservicios.app.respuestas.models.entity.Respuesta;
 import com.formacionbdi.microservicios.app.respuestas.models.repository.RespuestaRepository;
-import com.formacionbdi.microservicios.commons.examenes.models.entity.Examen;
-import com.formacionbdi.microservicios.commons.examenes.models.entity.Pregunta;
+//import com.formacionbdi.microservicios.commons.examenes.models.entity.Examen;
+//import com.formacionbdi.microservicios.commons.examenes.models.entity.Pregunta;
 
 @Service
 public class RespuestaServiceImpl implements RespuestaService {
@@ -19,18 +19,17 @@ public class RespuestaServiceImpl implements RespuestaService {
 	@Autowired
 	private RespuestaRepository respuestaRepository;
 
-	@Autowired
-	private ExamenFeignClient examenClient;
+	//@Autowired
+	//private ExamenFeignClient examenClient;
 
 	@Override
-	@Transactional
 	public Iterable<Respuesta> saveAll(Iterable<Respuesta> respuestas) {
 		return respuestaRepository.saveAll(respuestas);
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public Iterable<Respuesta> findRespuestaByAlumnoByExamen(Long alumnoId, Long examenId) {
+		/*
 		// Obtenemos el examen
 		Examen examen = examenClient.obtenerExamenPorId(examenId);
 		// Obtenemos las preguntas del examen
@@ -49,12 +48,37 @@ public class RespuestaServiceImpl implements RespuestaService {
 			});
 			return r;
 		}).collect(Collectors.toList());
+		*/
+		List<Respuesta> respuestas = (List<Respuesta>) respuestaRepository.findRespuestaByAlumnoByExamen(alumnoId, examenId);
 		return respuestas;
 	}
 
+	//Necesitamos conseguir los id de los examenes. Para ello necsitamos los id de las preguntas.
 	@Override
-	@Transactional(readOnly = true)
 	public Iterable<Long> findExamenesIdsConRespuestasByAlumno(Long alumnoId) {
-		return null;
+		/*
+		//Con el alumno conseguimos las respuestas respondidas por éste.
+		List<Respuesta> respuestasAlumno = (List<Respuesta>) respuestaRepository.findByAlumnoId(alumnoId);
+		//Preparamos una Lista vacía.
+		List<Long> examenIds = Collections.emptyList();
+		if(respuestasAlumno.size() > 0) {
+			//Con las respuestas del alumno conseguimos los id de las preguntas que ha respondido.
+			List<Long> preguntaIds = respuestasAlumno.stream().map(r -> r.getPreguntaId()).collect(Collectors.toList());
+			//Con los id de las preguntas respondidas obtenemos los id de los exámenes
+			examenIds = examenClient.obtenerExamenesIdsPorPreguntasIdRespondidas(preguntaIds);
+		}
+		*/
+		List<Respuesta> respuestasAlumno = (List<Respuesta>) respuestaRepository.findExamenesIdsConRespuestasByAlumno(alumnoId);
+		List<Long> examenIds = respuestasAlumno
+				.stream()
+				.map(r -> r.getPregunta().getExamen().getId())
+				.distinct()
+				.collect(Collectors.toList());
+		return examenIds;
+	}
+
+	@Override
+	public Iterable<Respuesta> findByAlumnoId(Long alumnoId) {
+		return respuestaRepository.findByAlumnoId(alumnoId);
 	}
 }

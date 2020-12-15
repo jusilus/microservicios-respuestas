@@ -42,6 +42,7 @@ public class RespuestaController {
 	public ResponseEntity<?> agregar(@RequestBody Iterable<Respuesta> respuestas) {
 		respuestas = ((List<Respuesta>) respuestas).stream().map(r -> {
 			r.setAlumnoId(r.getAlumno().getId());
+			r.setPreguntaId(r.getPregunta().getId());
 			return r;
 		}).collect(Collectors.toList());
 		Iterable<Respuesta> respuestasDb = respuestaService.saveAll(respuestas);
